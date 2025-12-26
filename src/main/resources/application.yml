@@ -1,0 +1,37 @@
+spring:
+  application:
+    name: resilient-inventory
+  jpa:
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 20
+  datasource:
+    url: jdbc:postgresql://localhost:5432/inventory_db
+    username: postgres
+    password: password
+    driver-class-name: org.postgresql.Driver
+
+# Configuración de Resilience4j
+resilience4j:
+  # 1. Configuración del Circuit Breaker
+  circuitbreaker:
+    instances:
+      inventoryDatabase:
+        registerHealthIndicator: true
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        permittedNumberOfCallsInHalfOpenState: 3
+        waitDurationInOpenState: 5s
+        failureRateThreshold: 50
+
+  # 2. Configuración del Retry (AL MISMO NIVEL QUE CIRCUITBREAKER)
+  retry:
+    instances:
+      inventoryRetry:
+        maxAttempts: 3
+        waitDuration: 500ms
+        retryExceptions:
+          - org.springframework.dao.OptimisticLockingFailureException
